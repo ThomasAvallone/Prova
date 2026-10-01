@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Intro Calcetto – Rossi vs Blu</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+@font-face{font-family:"Anton";src:url("fonts/anton-latin-400-normal.woff2") format("woff2");font-weight:400;font-style:normal}
+@font-face{font-family:"Barlow Condensed";src:url("fonts/barlow-condensed-latin-800-italic.woff2") format("woff2");font-weight:800;font-style:italic}
+
+:root{
+  --red:#e5162d; --red-l:#ff4d5e; --red-d:#7a0615;
+  --blue:#1b57ff; --blue-l:#4f8dff; --blue-d:#0a2a8f;
+  --ink:#0a0e1a; --gold:#ffd23f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+
+/* 1920x1080 canvas, scaled to fit only when previewing in a browser */
+#frame{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+#stage{position:absolute;inset:0;overflow:hidden;background:#050a08}
+#cam{position:absolute;inset:0;transform-origin:50% 50%}
+.scene{position:absolute;inset:0;visibility:hidden;overflow:hidden}
+#s0{visibility:visible}
+.fill{position:absolute;inset:0}
+
+/* ---------- Scene 0 : title ---------- */
+#s0 .grass{position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 50% 38%,rgba(46,125,70,.55) 0%,rgba(14,52,30,.35) 45%,rgba(3,8,6,0) 75%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 160px,rgba(255,255,255,0) 160px 320px),
+    #06110b}
+.pitchwrap{position:absolute;inset:0;transform-origin:50% 50%}
+.pitch{position:absolute;inset:0;width:100%;height:100%;opacity:.5}
+.pitch path{stroke-dasharray:1;stroke-dashoffset:1;opacity:0}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 45%,rgba(0,0,0,.6) 100%)}
+.beam{position:absolute;width:560px;height:2100px;top:-420px;filter:blur(34px);mix-blend-mode:screen;opacity:0}
+.beamR{left:-260px;transform-origin:50% 0;transform:rotate(-30deg);background:linear-gradient(180deg,rgba(255,40,70,.55),rgba(255,40,70,0) 72%)}
+.beamB{right:-260px;transform-origin:50% 0;transform:rotate(30deg);background:linear-gradient(180deg,rgba(60,110,255,.6),rgba(60,110,255,0) 72%)}
+.speed{position:absolute;left:50%;top:50%;width:3000px;height:3000px;margin:-1500px 0 0 -1500px;opacity:0;
+  background:repeating-conic-gradient(from 0deg,rgba(255,255,255,0) 0 4.2deg,rgba(255,255,255,.55) 4.2deg 4.7deg);
+  -webkit-mask-image:radial-gradient(circle,transparent 22%,#000 62%);mask-image:radial-gradient(circle,transparent 22%,#000 62%)}
+.ball{position:absolute;left:0;top:0;width:440px;height:440px;margin:-220px 0 0 -220px;opacity:0;
+  filter:drop-shadow(0 30px 40px rgba(0,0,0,.55))}
+.ball svg{width:100%;height:100%;display:block}
+.ring{position:absolute;left:50%;top:50%;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;
+  border:16px solid #fff;opacity:0}
+.ring.gold{border-color:var(--gold);border-width:8px}
+
+.kicker{position:absolute;left:0;right:0;top:218px;display:flex;justify-content:center;align-items:center;gap:36px;
+  font:800 italic 70px/1 "Barlow Condensed",sans-serif;letter-spacing:30px;color:var(--gold);text-transform:uppercase}
+.kicker i{display:block;width:170px;height:6px;background:var(--gold);transform-origin:50% 50%}
+.kicker span{display:block;padding-left:30px}
+.title{position:absolute;left:0;right:0;top:318px;height:420px;font:400 400px/420px "Anton",sans-serif;text-transform:uppercase}
+.title .copy{position:absolute;inset:0;display:flex;justify-content:center;white-space:nowrap;letter-spacing:18px;padding-left:18px}
+.title .copy.r{color:#ff2a40}
+.title .copy.b{color:#2f6dff}
+.title .copy.w{color:#fff;text-shadow:0 24px 46px rgba(0,0,0,.55)}
+.ch{display:inline-block;will-change:transform}
+.vsrow{position:absolute;left:0;right:0;top:790px;height:130px;display:flex;justify-content:center;align-items:center;gap:34px;
+  font:800 italic 104px/1 "Barlow Condensed",sans-serif;text-transform:uppercase;color:#fff;letter-spacing:6px}
+.pill{padding:6px 56px 6px;transform:skewX(-12deg);box-shadow:10px 10px 0 rgba(0,0,0,.35)}
+.pill span{display:block;transform:skewX(0)}
+.pill.r{background:var(--red)}
+.pill.b{background:var(--blue)}
+.vsrow .v{font-size:64px;letter-spacing:4px;color:var(--gold)}
+
+/* ---------- Team scenes ---------- */
+.team{--c:var(--red);--l:var(--red-l);--d:var(--red-d);clip-path:polygon(0 0,0 0,0 0,0 0)}
+.team.blue{--c:var(--blue);--l:var(--blue-l);--d:var(--blue-d)}
+.team .bg{position:absolute;inset:0;background:linear-gradient(120deg,var(--l) 0%,var(--c) 42%,var(--d) 100%)}
+.team .stripes{position:absolute;left:-540px;top:-960px;width:3000px;height:3000px;transform:rotate(-24deg);
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 110px,rgba(255,255,255,0) 110px 270px)}
+.team .tpitch{position:absolute;inset:0;width:100%;height:100%;opacity:.14}
+.team .tpitch path{stroke-dasharray:none;stroke-dashoffset:0;opacity:1}
+.ghostrow{position:absolute;left:0;white-space:nowrap;font:400 430px/1 "Anton",sans-serif;color:transparent;
+  -webkit-text-stroke:3px rgba(255,255,255,.16);text-transform:uppercase}
+.team .shade{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 40%,rgba(0,0,0,.5) 100%)}
+.head{position:absolute;top:0;bottom:0;width:740px;display:flex;flex-direction:column;justify-content:center;color:#fff}
+.head.left{left:92px;align-items:flex-start;text-align:left}
+.head.right{right:92px;align-items:flex-end;text-align:right}
+.head .sq{font:800 italic 108px/1 "Barlow Condensed",sans-serif;letter-spacing:26px;text-transform:uppercase;display:block;
+  text-shadow:6px 6px 0 var(--d)}
+.head.left .sq{padding-left:6px}
+.head.right .sq{padding-right:0;margin-right:-26px}
+.head .big{display:block;font:400 330px/1 "Anton",sans-serif;text-transform:uppercase;color:#fff;white-space:nowrap;margin-top:6px}
+.head .rule{width:100%;height:10px;background:var(--gold);margin:18px 0 22px;transform-origin:0 50%;box-shadow:6px 6px 0 var(--d)}
+.head.right .rule{transform-origin:100% 50%}
+.head .cnt{font:800 italic 62px/1 "Barlow Condensed",sans-serif;letter-spacing:12px;text-transform:uppercase;color:var(--gold)}
+.cards{position:absolute;top:172px;width:880px;height:736px}
+.cards.right{left:950px}
+.cards.left{left:90px}
+.card{position:absolute;left:0;width:880px;height:128px;display:flex;overflow:hidden;background:#fff;
+  box-shadow:14px 14px 0 rgba(0,0,0,.30)}
+.card .idx{flex:0 0 150px;display:flex;align-items:center;justify-content:center;background:var(--d);color:#fff;
+  font:400 74px/1 "Anton",sans-serif;letter-spacing:2px}
+.card .nm{flex:1;display:flex;align-items:center;padding-left:46px;color:var(--ink);
+  font:400 108px/1 "Anton",sans-serif;letter-spacing:4px;text-transform:uppercase;padding-top:4px}
+.card .acc{flex:0 0 28px;background:var(--c)}
+.card .shine{position:absolute;top:-20px;bottom:-20px;left:0;width:150px;
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95),rgba(255,255,255,0));transform:skewX(-20deg)}
+
+/* ---------- Scene VS ---------- */
+#sV .vbg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,#18233f 0%,#070a14 70%)}
+.panel{position:absolute;inset:0}
+.panel.pr{clip-path:polygon(0 0,1080px 0,840px 100%,0 100%);--c:var(--red);--d:var(--red-d);
+  background:linear-gradient(120deg,var(--red-l),var(--red) 45%,var(--red-d))}
+.panel.pb{clip-path:polygon(1080px 0,100% 0,100% 100%,840px 100%);--c:var(--blue);--d:var(--blue-d);
+  background:linear-gradient(240deg,var(--blue-l),var(--blue) 45%,var(--blue-d))}
+.panel .stripes{position:absolute;left:-540px;top:-960px;width:3000px;height:3000px;transform:rotate(-24deg);
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 110px,rgba(255,255,255,0) 110px 270px)}
+.panel .shade{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 35%,rgba(0,0,0,.5) 100%)}
+.seam{position:absolute;inset:0;background:#fff;clip-path:polygon(1071px 0,1089px 0,849px 100%,831px 100%);transform-origin:50% 0;opacity:0}
+.vs{position:absolute;left:0;right:0;top:170px;height:640px;font:400 640px/640px "Anton",sans-serif;text-transform:uppercase}
+.vs span{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;white-space:nowrap;letter-spacing:6px}
+.vs .r{color:#ff2a40}
+.vs .b{color:#2f6dff}
+.vs .w{color:#fff;text-shadow:0 30px 60px rgba(0,0,0,.55)}
+.lineup{position:absolute;top:150px;width:560px;color:#fff}
+.lineup.l{left:90px}
+.lineup.r{right:90px;text-align:right}
+.lineup h3{margin:0 0 26px;font:400 168px/1 "Anton",sans-serif;text-transform:uppercase;letter-spacing:3px;text-shadow:8px 8px 0 rgba(0,0,0,.35)}
+.lineup ul{list-style:none;margin:0;padding:0}
+.lineup li{display:flex;align-items:center;gap:22px;height:100px;font:800 italic 84px/1 "Barlow Condensed",sans-serif;letter-spacing:2px;text-transform:uppercase;
+  text-shadow:4px 4px 0 rgba(0,0,0,.3)}
+.lineup.r li{flex-direction:row-reverse}
+.lineup li::before{content:"";flex:0 0 20px;height:58px;background:var(--gold);transform:skewX(-12deg)}
+.foot{position:absolute;left:50%;bottom:62px;width:960px;margin-left:-480px;height:104px;background:var(--gold);transform:skewX(-12deg);
+  box-shadow:12px 12px 0 rgba(0,0,0,.35);clip-path:inset(0 50% 0 50%)}
+.foot b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font:800 italic 74px/1 "Barlow Condensed",sans-serif;letter-spacing:16px;color:var(--ink);text-transform:uppercase;padding-left:16px}
+.spark{position:absolute;left:50%;top:50%;width:26px;height:14px;margin:-7px 0 0 -13px;opacity:0;transform-origin:50% 50%}
+.vring{position:absolute;left:50%;top:48%;width:560px;height:560px;margin:-280px 0 0 -280px;border-radius:50%;border:18px solid #fff;opacity:0}
+.vring.gold{border-color:var(--gold);border-width:9px}
+
+/* ---------- Transition + fx layers ---------- */
+.edge{position:absolute;inset:0;visibility:hidden;clip-path:polygon(0 0,0 0,0 0,0 0)}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#curtain{position:absolute;inset:0;background:#04060c;opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="frame">
+ <div id="stage">
+  <div id="cam">
+
+   <!-- SCENE 0: title -->
+   <section id="s0" class="scene">
+     <div class="grass"></div>
+     <div class="pitchwrap" id="pitchwrap"></div>
+     <div class="beam beamR" id="beamR"></div>
+     <div class="beam beamB" id="beamB"></div>
+     <div class="vig"></div>
+     <div class="speed" id="speed"></div>
+     <div class="ball" id="ball"></div>
+     <div class="ring" id="ring"></div>
+     <div class="ring gold" id="ring2"></div>
+     <div class="kicker" id="kicker"><i id="kl"></i><span id="kt">La sfida</span><i id="kr"></i></div>
+     <div class="title" id="title"></div>
+     <div class="vsrow" id="vsrow">
+       <div class="pill r" id="pillR"><span>Rossi</span></div>
+       <div class="v" id="vsmini">vs</div>
+       <div class="pill b" id="pillB"><span>Blu</span></div>
+     </div>
+   </section>
+
+   <!-- SCENES 1-2: teams (built by script) -->
+   <section id="sR" class="scene team red"></section>
+   <section id="sB" class="scene team blue"></section>
+
+   <!-- SCENE 3: versus -->
+   <section id="sV" class="scene">
+     <div class="vbg"></div>
+     <div class="panel pr" id="panR"><div class="stripes" id="stR"></div><div class="shade"></div></div>
+     <div class="panel pb" id="panB"><div class="stripes" id="stB"></div><div class="shade"></div></div>
+     <div class="seam" id="seam"></div>
+     <div class="vring" id="vring"></div>
+     <div class="vring gold" id="vring2"></div>
+     <div class="vs" id="vs"><span class="r">VS</span><span class="b">VS</span><span class="w">VS</span></div>
+     <div class="lineup l" id="luR"></div>
+     <div class="lineup r" id="luB"></div>
+     <div class="foot" id="foot"><b>Calcio d'inizio</b></div>
+     <div id="sparks"></div>
+   </section>
+
+   <!-- wipe edges -->
+   <div class="edge" id="eR1" style="background:#fff"></div>
+   <div class="edge" id="eR2" style="background:var(--gold)"></div>
+   <div class="edge" id="eB1" style="background:#fff"></div>
+   <div class="edge" id="eB2" style="background:var(--gold)"></div>
+  </div>
+  <div id="curtain"></div>
+  <div id="flash"></div>
+ </div>
+</div>
+
+<script src="vendor/gsap.min.js"></script>
+<script>
+(() => {
+'use strict';
+const params   = new URLSearchParams(location.search);
+const RENDER   = params.has('render');
+const W = 1920, H = 1080;
+
+/* ======================= DATA — edit names here ======================= */
+const TEAMS = {
+  red:  { label: 'Rossa', short: 'Rossi', players: ['Massi', 'Matte', 'Fede M.', 'Lippa', 'Thomas'] },
+  blue: { label: 'Blu',   short: 'Blu',   players: ['Salmi', 'Dani', 'Cristian', 'Bik', 'Luciano'] },
+};
+const TITLE = 'Calcetto';
+
+/* ======================= TIMING (seconds) — 120 BPM grid ======================= */
+const T = {
+  hit: 1.0,        // ball hits the camera, title slams
+  redS: 3.0,       // red wipe starts
+  blueS: 7.0,      // blue wipe starts
+  exitB: 11.0,     // blue cards leave
+  curtain: 11.25,  // fade to black
+  panels: 11.45,   // red/blue panels start flying in
+  vs: 12.0,        // collision / VS
+  out: 14.35,      // whiteout
+  end: 14.8,
+};
+const DURATION = T.end;
+
+/* ======================= helpers ======================= */
+const $  = (s, r = document) => r.querySelector(s);
+const mk = (tag, cls, html = '', parent) => { const e = document.createElement(tag); if (cls) e.className = cls; e.innerHTML = html; if (parent) parent.appendChild(e); return e; };
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const cues = [];
+const cue = (t, n, o = {}) => cues.push(Object.assign({ t: +t.toFixed(4), n }, o));
+
+const tl = gsap.timeline({ paused: true, defaults: { overwrite: false } });
+
+/* ======================= pitch markings ======================= */
+function pitchSVG(cls){
+  const p = d => `<path d="${d}" pathLength="1"/>`;
+  return `<svg class="${cls}" viewBox="0 0 1920 1080" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    ${p('M80 80H1840V1000H80Z')}${p('M960 80V1000')}
+    ${p('M960 390A150 150 0 1 1 960 690A150 150 0 1 1 960 390Z')}
+    ${p('M80 300H330V780H80')}${p('M1840 300H1590V780H1840')}
+    ${p('M80 430H170V650H80')}${p('M1840 430H1750V650H1840')}
+    ${p('M330 440A110 110 0 0 1 330 640')}${p('M1590 440A110 110 0 0 0 1590 640')}
+  </svg>`;
+}
+
+/* ======================= football ======================= */
+function ballSVG(){
+  const R = 100, pts = (cx, cy, r, rot) => [0,1,2,3,4].map(k => { const a = (rot + 72*k) * Math.PI/180; return [cx + r*Math.cos(a), cy + r*Math.sin(a)]; });
+  const poly = ps => 'M' + ps.map(p => p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join('L') + 'Z';
+  const center = pts(0, 0, 33, -90);
+  let patches = '', seams = '';
+  const outer = [];
+  for (let k = 0; k < 5; k++){
+    const ang = -90 + 72*k;
+    const local = pts(0, 0, 27, 90).map(([x, y]) => [x, y*0.72 - 80]);            // squashed, pushed outwards
+    const rot = (ang + 90) * Math.PI/180, c = Math.cos(rot), s = Math.sin(rot);
+    const g = local.map(([x, y]) => [x*c - y*s, x*s + y*c]);
+    outer.push(g);
+    patches += `<path d="${poly(g)}" fill="url(#pg)"/>`;
+    // seam: central vertex -> inner vertex of outer pentagon (index 0 points to the centre)
+    seams += `<path d="M${center[k][0].toFixed(2)} ${center[k][1].toFixed(2)}L${g[0][0].toFixed(2)} ${g[0][1].toFixed(2)}"/>`;
+    // shoulders to the rim
+    [2, 3].forEach(i => { const [x, y] = g[i]; const d = Math.hypot(x, y); seams += `<path d="M${x.toFixed(2)} ${y.toFixed(2)}L${(x/d*R).toFixed(2)} ${(y/d*R).toFixed(2)}"/>`; });
+  }
+  for (let k = 0; k < 5; k++){            // hexagon outlines between neighbouring outer patches
+    const a = outer[k], b = outer[(k+1) % 5];
+    seams += `<path d="M${a[4][0].toFixed(2)} ${a[4][1].toFixed(2)}L${b[1][0].toFixed(2)} ${b[1][1].toFixed(2)}"/>`;
+  }
+  return `<svg viewBox="-104 -104 208 208" xmlns="http://www.w3.org/2000/svg">
+   <defs>
+    <radialGradient id="bg" cx="36%" cy="30%" r="85%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e6e9f0"/><stop offset="1" stop-color="#9aa3b5"/></radialGradient>
+    <radialGradient id="pg" cx="40%" cy="35%" r="80%"><stop offset="0" stop-color="#2a3142"/><stop offset="1" stop-color="#0b0e18"/></radialGradient>
+    <clipPath id="bc"><circle r="${R}"/></clipPath>
+   </defs>
+   <g clip-path="url(#bc)">
+     <circle r="${R}" fill="url(#bg)"/>
+     <g fill="none" stroke="#141a28" stroke-width="2.6" stroke-linecap="round">${seams}</g>
+     ${patches}
+     <path d="${poly(center)}" fill="url(#pg)"/>
+     <ellipse cx="-34" cy="-46" rx="30" ry="15" transform="rotate(-38 -34 -46)" fill="#fff" opacity=".35"/>
+   </g>
+   <circle r="${R}" fill="none" stroke="#141a28" stroke-width="3.2"/>
+  </svg>`;
+}
+
+/* ======================= wipes ======================= */
+const K = 260;   // slant of the wipe front
+function wipe(scene, e1, e2, t0, dur, rtl){
+  const o = { f: -K - 120 };
+  const P = pts => 'polygon(' + pts.map(([x, y]) => `${rtl ? W - x : x}px ${y}px`).join(',') + ')';
+  const apply = () => {
+    const f = o.f;
+    scene.style.clipPath = P([[0, 0], [f + K, 0], [f, H], [0, H]]);
+    e1.style.clipPath    = P([[f + K, 0], [f + K + 74, 0], [f + 74, H], [f, H]]);
+    e2.style.clipPath    = P([[f + K + 74, 0], [f + K + 106, 0], [f + 106, H], [f + 74, H]]);
+  };
+  apply();
+  tl.set([scene, e1, e2], { visibility: 'visible' }, t0);
+  tl.to(o, { f: W, duration: dur, ease: 'power3.inOut', onUpdate: apply }, t0);
+  tl.set([e1, e2], { visibility: 'hidden' }, t0 + dur + 0.02);
+  cue(t0, 'whoosh', { dur, pan: rtl ? -1 : 1 });
+}
+
+/* ======================= camera shake / flash ======================= */
+function shake(t0, amp, n = 9, step = 0.045, seed = 3){
+  const r = rng(seed);
+  tl.fromTo('#cam', { scale: 1 }, { scale: 1 + amp / 560, duration: 0.05, ease: 'power2.out', immediateRender: false }, t0);
+  for (let i = 0; i < n; i++){
+    const a = amp * (1 - i / n);
+    tl.to('#cam', { x: (r() - .5) * 2 * a, y: (r() - .5) * 2 * a, rotation: (r() - .5) * a * .06, duration: step, ease: 'none' }, t0 + 0.04 + i * step);
+  }
+  tl.to('#cam', { x: 0, y: 0, rotation: 0, scale: 1, duration: 0.3, ease: 'power2.out' }, t0 + 0.04 + n * step);
+}
+function flash(t0, peak = 1, up = 0.04, down = 0.35){
+  tl.to('#flash', { opacity: peak, duration: up, ease: 'none' }, t0);
+  tl.to('#flash', { opacity: 0, duration: down, ease: 'power2.out' }, t0 + up);
+}
+function ringBurst(sel, t0, to = 3.4, dur = 0.8){
+  tl.fromTo(sel, { scale: 0.15, opacity: 1 }, { scale: to, opacity: 0, duration: dur, ease: 'power3.out', immediateRender: false }, t0);
+}
+
+/* ======================= SCENE 0 : title ======================= */
+function buildTitle(){
+  $('#pitchwrap').innerHTML = pitchSVG('pitch');
+  $('#ball').innerHTML = ballSVG();
+  const paths = [...document.querySelectorAll('#pitchwrap path')];
+
+  // pitch draws itself
+  paths.forEach((p, i) => {
+    tl.to(p, { opacity: 1, duration: 0.05 }, 0.05 + i * 0.07);
+    tl.to(p, { strokeDashoffset: 0, duration: 1.1, ease: 'power2.inOut' }, 0.05 + i * 0.07);
+  });
+  tl.fromTo('#pitchwrap', { scale: 1.12 }, { scale: 1.0, duration: T.redS, ease: 'none', immediateRender: false }, 0);
+  tl.fromTo('.grass', { opacity: 0 }, { opacity: 1, duration: 0.5, immediateRender: false }, 0);
+
+  // speed lines + ball flying into the camera
+  const approach = T.hit - 0.78;
+  tl.fromTo('#speed', { opacity: 0, rotation: 0 }, { opacity: .5, rotation: 18, duration: 0.78, ease: 'power2.in', immediateRender: false }, approach);
+  tl.set('#speed', { opacity: 0 }, T.hit);
+  tl.set('#ball', { opacity: 1 }, approach);
+  tl.fromTo('#ball', { x: 600, y: 790, scale: 0.05, rotation: 0 },
+                     { x: 960, y: 560, scale: 2.55, rotation: 620, duration: 0.78, ease: 'power3.in', immediateRender: false }, approach);
+  tl.set('#ball', { opacity: 0 }, T.hit);
+  cue(0.0, 'riser', { dur: T.hit });
+
+  // impact
+  cue(T.hit, 'impact', { big: 1 });
+  flash(T.hit, 1, 0.03, 0.45);
+  ringBurst('#ring', T.hit, 4.2, 0.9);
+  ringBurst('#ring2', T.hit + 0.06, 3.3, 0.9);
+  shake(T.hit, 16, 8, 0.045, 11);
+  tl.fromTo('#beamR', { opacity: 0 }, { opacity: 1, duration: 0.5, immediateRender: false }, T.hit);
+  tl.fromTo('#beamB', { opacity: 0 }, { opacity: 1, duration: 0.5, immediateRender: false }, T.hit);
+  tl.fromTo('#beamR', { rotation: -34 }, { rotation: -26, duration: T.redS - T.hit, ease: 'sine.inOut', immediateRender: false }, T.hit);
+  tl.fromTo('#beamB', { rotation: 34 },  { rotation: 26,  duration: T.redS - T.hit, ease: 'sine.inOut', immediateRender: false }, T.hit);
+
+  // title letters
+  const title = $('#title');
+  const letters = [...TITLE.toUpperCase()];
+  ['r', 'b', 'w'].forEach(c => {
+    const copy = mk('div', 'copy ' + c, '', title);
+    letters.forEach(ch => mk('span', 'ch', ch, copy));
+  });
+  const rr = rng(7);
+  letters.forEach((_, i) => {
+    const t = T.hit + 0.03 + i * 0.055;
+    const rot = (rr() - .5) * 24;
+    const sel = `#title .ch:nth-child(${i + 1})`;
+    gsap.set(sel, { opacity: 0 });
+    tl.fromTo(sel, { y: -520, scale: 2.8, rotation: rot, opacity: 0 },
+                   { y: 0, scale: 1, rotation: 0, opacity: 1, duration: 0.5, ease: 'expo.out', immediateRender: false }, t);
+    cue(t + 0.12, 'tick', { i });
+  });
+  const landed = T.hit + 0.03 + 7 * 0.055 + 0.35;
+  tl.to('#title .copy.r', { x: -15, y: 3, duration: 0.35, ease: 'back.out(2.5)' }, landed);
+  tl.to('#title .copy.b', { x: 15,  y: -3, duration: 0.35, ease: 'back.out(2.5)' }, landed);
+  cue(landed, 'split');
+
+  // kicker
+  gsap.set('#kt', { opacity: 0 });
+  gsap.set(['#kl', '#kr'], { scaleX: 0 });
+  tl.fromTo('#kt', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power3.out', immediateRender: false }, 1.6);
+  tl.to('#kl', { scaleX: 1, duration: 0.5, ease: 'power3.out' }, 1.6);
+  tl.to('#kr', { scaleX: 1, duration: 0.5, ease: 'power3.out' }, 1.6);
+  cue(1.6, 'blip');
+
+  // ROSSI vs BLU
+  gsap.set('#pillR', { skewX: -12, x: -1100, opacity: 0 });
+  gsap.set('#pillB', { skewX: -12, x:  1100, opacity: 0 });
+  gsap.set('#vsmini', { scale: 0, opacity: 0 });
+  tl.to('#pillR', { x: 0, opacity: 1, duration: 0.5, ease: 'power4.out' }, 1.95);
+  tl.to('#pillB', { x: 0, opacity: 1, duration: 0.5, ease: 'power4.out' }, 1.95);
+  tl.to('#vsmini', { scale: 1, opacity: 1, duration: 0.45, ease: 'back.out(3)' }, 2.3);
+  cue(2.3, 'clash');
+  tl.to('#vsmini', { scale: 1.18, duration: 0.25, yoyo: true, repeat: 1, ease: 'sine.inOut' }, 2.6);
+}
+
+/* ======================= TEAM scenes ======================= */
+function fitWidth(el, target, maxFont = Infinity){
+  const fs = parseFloat(getComputedStyle(el).fontSize);
+  const w = el.getBoundingClientRect().width / (RENDER ? 1 : currentScale);
+  el.style.fontSize = Math.min(fs * target / w, maxFont) + 'px';
+}
+let currentScale = 1;
+
+function buildTeam(cfg){
+  const { scene, key, S, rtl } = cfg;
+  const team = TEAMS[key];
+  const sgn = rtl ? -1 : 1;                 // red: cards on the right (enter from +x); blue: cards on the left (enter from -x)
+  scene.innerHTML = `
+    <div class="bg"></div>
+    <div class="stripes"></div>
+    ${pitchSVG('tpitch')}
+    <div class="ghostrow" style="top:-70px"></div>
+    <div class="ghostrow" style="top:560px"></div>
+    <div class="shade"></div>
+    <div class="head ${rtl ? 'right' : 'left'}">
+      <span class="sq">Squadra</span>
+      <span class="big">${team.label}</span>
+      <div class="rule"></div>
+      <span class="cnt">${team.players.length} giocatori</span>
+    </div>
+    <div class="cards ${rtl ? 'left' : 'right'}"></div>`;
+  const ghost = [...scene.querySelectorAll('.ghostrow')];
+  ghost.forEach(g => g.textContent = (team.short.toUpperCase() + '  ').repeat(10));
+  const big = $('.big', scene);
+  fitWidth(big, 700, 430);
+
+  const cards = $('.cards', scene);
+  const els = team.players.map((name, i) => {
+    const c = mk('div', 'card', `<div class="idx">${String(i + 1).padStart(2, '0')}</div><div class="nm">${name}</div><div class="acc"></div><div class="shine"></div>`, cards);
+    c.style.top = (i * (128 + 24)) + 'px';
+    gsap.set(c, { skewX: -12, x: sgn * 1500 });
+    return c;
+  });
+
+  const wipeDur = 0.6, end = S + 4.0;
+  wipe(scene, cfg.e1, cfg.e2, S, wipeDur, rtl);
+
+  // looping background motion
+  const st = $('.stripes', scene);
+  tl.fromTo(st, { x: 0 }, { x: -sgn * 540, duration: end - S + .6, ease: 'none', immediateRender: false }, S);
+  tl.fromTo(ghost[0], { x: rtl ? -900 : -1500 }, { x: rtl ? -1500 : -900, duration: end - S + .6, ease: 'none', immediateRender: false }, S);
+  tl.fromTo(ghost[1], { x: rtl ? -1500 : -900 }, { x: rtl ? -900 : -1500, duration: end - S + .6, ease: 'none', immediateRender: false }, S);
+
+  // headline
+  const sq = $('.sq', scene), rule = $('.rule', scene), cnt = $('.cnt', scene);
+  gsap.set(sq,  { x: -sgn * 160, opacity: 0 });
+  gsap.set(big, { opacity: 0, scale: 1.9, transformOrigin: rtl ? '100% 50%' : '0% 50%' });
+  gsap.set(rule, { scaleX: 0 });
+  gsap.set(cnt, { x: -sgn * 120, opacity: 0 });
+  tl.to(sq,  { x: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, S + 0.45);
+  tl.to(big, { opacity: 1, scale: 1, duration: 0.42, ease: 'expo.out' }, S + 0.6);
+  cue(S + 0.72, 'slam');
+  tl.to(rule, { scaleX: 1, duration: 0.5, ease: 'power3.out' }, S + 0.85);
+  tl.to(cnt,  { x: 0, opacity: 1, duration: 0.45, ease: 'power3.out' }, S + 1.0);
+
+  // cards on the 8th-note grid (land on S+1.0, +0.25 …)
+  els.forEach((c, i) => {
+    const land = S + 1.0 + 0.25 * i;
+    tl.to(c, { x: 0, duration: 0.5, ease: 'power4.out' }, land - 0.28);
+    tl.fromTo($('.shine', c), { x: -260 }, { x: 1180, duration: 0.6, ease: 'power2.inOut', immediateRender: false }, land);
+    gsap.set($('.shine', c), { x: -260 });
+    cue(land, 'card', { team: key, i });
+  });
+  tl.fromTo(cards, { x: 0 }, { x: 0, duration: 0.01 }, S);  // keep container stable
+
+  return { els, head: $('.head', scene) };
+}
+
+/* ======================= VS scene ======================= */
+function buildVS(){
+  const r = rng(21);
+  const mkList = (el, key, title) => {
+    el.innerHTML = `<h3>${title}</h3><ul>${TEAMS[key].players.map(n => `<li>${n}</li>`).join('')}</ul>`;
+  };
+  mkList($('#luR'), 'red',  'Rossi');
+  mkList($('#luB'), 'blue', 'Blu');
+  fitWidth($('#luR h3'), 360); fitWidth($('#luB h3'), 360);
+
+  // background stripes drift
+  tl.fromTo('#stR', { x: 0 }, { x: -540, duration: T.end - T.vs, ease: 'none', immediateRender: false }, T.vs);
+  tl.fromTo('#stB', { x: 0 }, { x: 540,  duration: T.end - T.vs, ease: 'none', immediateRender: false }, T.vs);
+
+  // dark stage appears behind the curtain, panels fly in
+  tl.set('#sV', { visibility: 'visible' }, T.panels);
+  tl.set('#sB', { visibility: 'hidden' }, T.panels);
+  gsap.set('#panR', { x: -1950 });
+  gsap.set('#panB', { x:  1950 });
+  const fly = T.vs - T.panels;
+  tl.to('#panR', { x: 0, duration: fly, ease: 'power3.in' }, T.panels);
+  tl.to('#panB', { x: 0, duration: fly, ease: 'power3.in' }, T.panels);
+  cue(T.panels, 'riser2', { dur: fly });
+
+  // collision
+  cue(T.vs, 'impact', { big: 2 });
+  flash(T.vs, 1, 0.03, 0.5);
+  shake(T.vs, 30, 12, 0.045, 5);
+  ringBurst('#vring', T.vs, 3.6, 0.9);
+  ringBurst('#vring2', T.vs + 0.07, 2.8, 0.9);
+  gsap.set('#seam', { opacity: 0, scaleY: 0 });
+  tl.set('#seam', { opacity: 1 }, T.vs);
+  tl.to('#seam', { scaleY: 1, duration: 0.25, ease: 'power3.out' }, T.vs);
+  tl.to('#seam', { opacity: 0.85, duration: 0.5 }, T.vs + 0.25);
+
+  // VS word
+  const vsCopies = ['#vs .r', '#vs .b', '#vs .w'];
+  gsap.set(vsCopies, { opacity: 0, scale: 2.6 });
+  tl.to(vsCopies, { opacity: 1, scale: 1, duration: 0.5, ease: 'expo.out' }, T.vs);
+  tl.to('#vs .r', { x: -24, y: 4, duration: 0.4, ease: 'back.out(2.5)' }, T.vs + 0.25);
+  tl.to('#vs .b', { x:  24, y: -4, duration: 0.4, ease: 'back.out(2.5)' }, T.vs + 0.25);
+  tl.to('#vs', { scale: 1.045, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 3, transformOrigin: '50% 50%' }, T.vs + 0.7);
+
+  // sparks
+  const sp = $('#sparks'); const cols = ['#ff3b4e', '#4f8dff', '#ffffff', '#ffd23f'];
+  for (let i = 0; i < 46; i++){
+    const s = mk('div', 'spark', '', sp);
+    s.style.background = cols[i % 4];
+    const ang = r() * Math.PI * 2, dist = 380 + r() * 760, dur = .75 + r() * .55;
+    const L = 40 + r() * 70;
+    gsap.set(s, { opacity: 0, width: L, rotation: ang * 180 / Math.PI });
+    tl.fromTo(s, { x: Math.cos(ang) * 120, y: Math.sin(ang) * 120 + 20, opacity: 1, scaleX: 1 },
+                 { x: Math.cos(ang) * dist, y: Math.sin(ang) * dist * .8 + 20, opacity: 0, scaleX: .2, duration: dur, ease: 'power3.out', immediateRender: false }, T.vs + 0.02);
+  }
+
+  // lineups
+  const t0 = T.vs + 0.6;
+  gsap.set(['#luR h3', '#luB h3'], { opacity: 0 });
+  gsap.set('#luR h3', { x: -240 }); gsap.set('#luB h3', { x: 240 });
+  tl.to('#luR h3', { x: 0, opacity: 1, duration: 0.5, ease: 'power4.out' }, t0);
+  tl.to('#luB h3', { x: 0, opacity: 1, duration: 0.5, ease: 'power4.out' }, t0);
+  cue(t0 + 0.1, 'slam');
+  ['#luR', '#luB'].forEach((sel, k) => {
+    const lis = [...document.querySelectorAll(sel + ' li')];
+    lis.forEach((li, i) => {
+      gsap.set(li, { x: (k ? 360 : -360), opacity: 0 });
+      const t = t0 + 0.25 + i * 0.075;
+      tl.to(li, { x: 0, opacity: 1, duration: 0.45, ease: 'power4.out' }, t);
+      if (k === 0) cue(t + 0.06, 'tick2', { i });
+    });
+  });
+
+  // foot bar
+  const tf = T.vs + 1.2;
+  gsap.set('#foot', { clipPath: 'inset(0 50% 0 50%)' });
+  gsap.set('#foot b', { opacity: 0 });
+  tl.to('#foot', { clipPath: 'inset(0 0% 0 0%)', duration: 0.45, ease: 'power4.out' }, tf);
+  tl.to('#foot b', { opacity: 1, duration: 0.25 }, tf + 0.25);
+  cue(tf, 'blip');
+}
+
+/* ======================= master timeline ======================= */
+function build(){
+  buildTitle();
+
+  const red = buildTeam({ scene: $('#sR'), key: 'red',  S: T.redS,  rtl: false, e1: $('#eR1'), e2: $('#eR2') });
+  tl.set('#s0', { visibility: 'hidden' }, T.redS + 0.65);
+
+  const blue = buildTeam({ scene: $('#sB'), key: 'blue', S: T.blueS, rtl: true,  e1: $('#eB1'), e2: $('#eB2') });
+  tl.set('#sR', { visibility: 'hidden' }, T.blueS + 0.65);
+
+  // blue cards leave, then dark curtain, then VS
+  blue.els.forEach((c, i) => tl.to(c, { x: -1500, duration: 0.32, ease: 'power3.in' }, T.exitB + i * 0.04));
+  tl.to(blue.head, { opacity: 0, x: 160, duration: 0.3, ease: 'power2.in' }, T.exitB);
+  cue(T.exitB, 'whoosh', { dur: 0.35, pan: -1 });
+  tl.to('#curtain', { opacity: 1, duration: T.panels - T.curtain, ease: 'power1.in' }, T.curtain);
+  tl.to('#curtain', { opacity: 0, duration: 0.18, ease: 'power1.out' }, T.panels);
+
+  buildVS();
+
+  // whiteout
+  tl.to('#flash', { opacity: 1, duration: T.end - T.out - 0.05, ease: 'power2.in' }, T.out);
+  cue(T.out, 'whiteout', { dur: T.end - T.out });
+
+  // musical structure markers for audio.py
+  cue(T.redS, 'music_on');
+  cue(T.exitB, 'breakdown');
+  cue(T.vs, 'drop');
+  cue(T.out, 'music_out');
+
+  tl.set({}, {}, DURATION);   // pad timeline to the exact duration
+}
+
+/* ======================= bootstrap ======================= */
+function fitToWindow(){
+  const s = Math.min(innerWidth / W, innerHeight / H);
+  currentScale = s;
+  const f = $('#frame');
+  f.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`;
+}
+if (!RENDER){ fitToWindow(); addEventListener('resize', fitToWindow); }
+
+document.fonts.load('400 100px "Anton"').then(() => document.fonts.load('800 italic 100px "Barlow Condensed"')).then(() => document.fonts.ready).then(() => {
+  build();
+  window.__duration = DURATION;
+  window.__cues = cues;
+  window.__seek = t => { tl.seek(t, false); };
+  window.__seek(0);
+  window.__ready = true;
+  if (!RENDER){
+    tl.play(0);
+    addEventListener('keydown', e => { if (e.code === 'Space'){ e.preventDefault(); tl.paused() ? tl.play() : tl.restart(); } });
+    addEventListener('click', () => tl.restart());
+  }
+});
+})();
+</script>
+</body>
+</html>

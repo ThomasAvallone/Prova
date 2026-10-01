@@ -1,0 +1,12 @@
+{
+  "name": "calcetto-intro",
+  "private": true,
+  "type": "module",
+  "description": "Intro motion graphic Rossi vs Blu (HTML + GSAP -> MP4)",
+  "scripts": {
+    "build": "./make.sh"
+  },
+  "dependencies": {
+    "playwright-core": "1.56.1"
+  }
+}
