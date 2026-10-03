@@ -338,13 +338,13 @@ const PALETTES = [
 ];
 
 /* game state */
-let circles=[], score=0, combo=1, missCount=0, hitCount=0;
+let circles=[], score=0, combo=1, maxCombo=1, missCount=0, hitCount=0;
 let timeLeft=30, gameRunning=false, spawnTimer=0;
 let spawnInterval=1200, circleLife=2200;
 let raf;
 
 function reset(){
-  circles=[]; score=0; combo=1; missCount=0; hitCount=0;
+  circles=[]; score=0; combo=1; maxCombo=1; missCount=0; hitCount=0;
   timeLeft=30; spawnTimer=0;
   spawnInterval=1200; circleLife=2200;
 }
@@ -540,6 +540,7 @@ function onTap(px, py){
 
       const prevCombo = combo;
       combo = Math.min(combo+1, 8);
+      maxCombo = Math.max(maxCombo, combo);
       hudCo.textContent = 'x'+combo;
 
       if(combo > prevCombo && combo >= 3){
@@ -608,7 +609,7 @@ function endGame(){
   document.getElementById('finalScore').textContent = score;
   const acc = hitCount+missCount > 0 ? Math.round(hitCount/(hitCount+missCount)*100) : 0;
   document.getElementById('statsText').innerHTML =
-    `Tocchi: <b>${hitCount}</b> &nbsp;|&nbsp; Mancati: <b>${missCount}</b><br>Accuratezza: <b>${acc}%</b> &nbsp;|&nbsp; Combo max: <b>x${combo}</b>`;
+    `Tocchi: <b>${hitCount}</b> &nbsp;|&nbsp; Mancati: <b>${missCount}</b><br>Accuratezza: <b>${acc}%</b> &nbsp;|&nbsp; Combo max: <b>x${maxCombo}</b>`;
   document.getElementById('hiScore').textContent =
     isNew ? '🏆 Nuovo record!' : `🏅 Record: ${prev}`;
 
